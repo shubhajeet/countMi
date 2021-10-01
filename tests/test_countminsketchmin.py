@@ -2,24 +2,24 @@
 import unittest
 from collections import Counter
 
-from countminsketch import CountMinSketch
+from countminsketch import CountMinSketchMinUpdate
 
 
-class TestCountMinSketch(unittest.TestCase):
+class TestCountMinSketchMinUpdate(unittest.TestCase):
     def test_zero_at_start(self):
-        sketch = CountMinSketch(10, 5)
+        sketch = CountMinSketchMinUpdate(10, 5)
         for thing in (0, 1, -1, tuple, tuple(), "", "yeah", object()):
             self.assertEqual(sketch.query(thing), 0)
 
     def test_bad_init(self):
         with self.assertRaises(ValueError):
-            CountMinSketch(0, 5)
+            CountMinSketchMinUpdate(0, 5)
         with self.assertRaises(ValueError):
-            CountMinSketch(100, 0)
+            CountMinSketchMinUpdate(100, 0)
 
     def test_simple_usage(self):
         N = 1000
-        sketch = CountMinSketch(10, 5)
+        sketch = CountMinSketchMinUpdate(10, 5)
         for _ in range(N):
             sketch.add("a")
         self.assertEqual(sketch.query("a"), N)
@@ -27,7 +27,7 @@ class TestCountMinSketch(unittest.TestCase):
         self.assertEqual(len(sketch), N)
 
     def test_syntax_sugar(self):
-        sketch = CountMinSketch(10, 5)
+        sketch = CountMinSketchMinUpdate(10, 5)
         self.assertEqual(sketch.query("a"), sketch["a"])
         sketch.add("a")
         self.assertEqual(sketch.query("a"), sketch["a"])
@@ -35,7 +35,7 @@ class TestCountMinSketch(unittest.TestCase):
     def test_counts_overestimate(self):
         text = open(__file__).read()
         counter = Counter(text)
-        sketch = CountMinSketch(10, 5)
+        sketch = CountMinSketchMinUpdate(10, 5)
         for x in text:
             sketch.add(x)
         for x in set(text):
@@ -43,16 +43,16 @@ class TestCountMinSketch(unittest.TestCase):
 
     def test_counts_donotunderestimate(self):
         text = open(__file__).read()
-        sketch = CountMinSketch(10, 5)
+        sketch = CountMinSketchMinUpdate(10, 5)
         for x in text:
             sketch.add(x)
         for x in text:
             sketch.remove(x)
         for x in set(text):
-            self.assertEqual(sketch[x], 0)
+            self.assertGreaterEqual(sketch[x], 0)
 
     def test_add_greater_than_one(self):
-        sketch = CountMinSketch(10, 5)
+        sketch = CountMinSketchMinUpdate(10, 5)
         sketch.add("a", 123)
         self.assertEqual(sketch.query("a"), 123)
 

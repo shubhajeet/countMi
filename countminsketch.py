@@ -46,14 +46,14 @@ class CountMinSketch(object):
         self.d = d
         self.n = 0
         self.tables = []
-        for _ in xrange(d):
-            table = array.array("l", (0 for _ in xrange(m)))
+        for _ in range(d):
+            table = array.array("l", (0 for _ in range(m)))
             self.tables.append(table)
 
     def _hash(self, x):
-        md5 = hashlib.md5(str(hash(x)))
-        for i in xrange(self.d):
-            md5.update(str(i))
+        md5 = hashlib.md5(str(hash(x)).encode('utf-8'))
+        for i in range(self.d):
+            md5.update(str(i).encode('utf-8'))
             yield int(md5.hexdigest(), 16) % self.m
 
     def add(self, x, value=1):
@@ -69,6 +69,19 @@ class CountMinSketch(object):
         for table, i in zip(self.tables, self._hash(x)):
             table[i] += value
 
+    def remove(self, x, value=1):
+        """
+        element `x` as if have been removed `value` times.
+        By default `value=1` so:
+
+            sketch.remove(x)
+
+        Effectively counts `x` as occurring once.
+        """
+        self.n -= value
+        for table, i in zip(self.tables, self._hash(x)):
+            table[i] -= value
+
     def query(self, x):
         """
         Return an estimation of the amount of times `x` has ocurred.
@@ -82,9 +95,58 @@ class CountMinSketch(object):
         """
         return self.query(x)
 
-    def __len__(self):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class CountMinSketchMinUpdate(CountMinSketch):
+    """
+    Similar to the CountMinSketch
+    Just the difference is that it updates only cells that have min value or present lookup value of a key
+    """
+    def __init__(self, m, d):
+        super().__init__(m, d)
+    
+    def add(self, x, value=1):
         """
-        The amount of things counted. Takes into account that the `value`
-        argument of `add` might be different from 1.
+        Count element `x` as if had appeared `value` times.
+        By default `value=1` so:
+
+            sketch.add(x)
+
+        Effectively counts `x` as occurring once.
         """
-        return self.n
+        self.n += value
+        present_count = self.query(x)
+        for table, i in zip(self.tables, self._hash(x)):
+            if table[i] < (present_count + value):
+                table[i] = present_count + value
+
+    def remove(self, x, value=1):
+        """
+        Remove no of Count element `x` as if had appeared `value` times.
+        By default `value=1` so:
+
+            sketch.remove(x)
+
+        Effectively counts `x` as occurring once.
+        """
+        self.n -= value
+        present_count = self.query(x)
+        for table, i in zip(self.tables, self._hash(x)):
+            if table[i] == present_count:
+                table[i] -= value
+                if table[i] < 0:
+                    table[i] = 0

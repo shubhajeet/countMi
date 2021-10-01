@@ -2,7 +2,7 @@
 import unittest
 from collections import Counter
 
-from countminsketch import CountMinSketch
+from .countminsketch import CountMinSketch
 
 
 class TestCountMinSketch(unittest.TestCase):
@@ -40,16 +40,6 @@ class TestCountMinSketch(unittest.TestCase):
             sketch.add(x)
         for x in set(text):
             self.assertGreaterEqual(sketch[x], counter[x])
-
-    def test_counts_donotunderestimate(self):
-        text = open(__file__).read()
-        sketch = CountMinSketch(10, 5)
-        for x in text:
-            sketch.add(x)
-        for x in text:
-            sketch.remove(x)
-        for x in set(text):
-            self.assertEqual(sketch[x], 0)
 
     def test_add_greater_than_one(self):
         sketch = CountMinSketch(10, 5)
